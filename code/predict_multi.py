@@ -6,6 +6,7 @@ from threading import Thread
 
 url = 'http://localhost/predictions'
 ping = 'http://localhost/ping'
+models_url = 'http://localhost:8080/models'
 dataset_dir = 'dataset/imagenet-mini/val'
 ais = ['alexnet', 'squeeze', 'mobile', 'inception', 'resnet']
 csv_header = 'image;probability;guess_class;real_class;other_predictions'
@@ -83,7 +84,7 @@ def worker(model, all_classes):
     f = open(f'{model}.csv', 'w')
     f.write(csv_header)
     f.write('\n')
-    
+
     for pred in predictions:
         f.write(pred.to_csv())
         f.write('\n')
@@ -91,39 +92,57 @@ def worker(model, all_classes):
     f.close()
 
 
+def get_models():
+    res = requests.get(models_url)
+
+    models_list = json.loads(res.text)
+
+    result = []
+    for model in models_list['models']:
+        result.append(model['modelName'])
+
+    return result
+
+
+def menu():
+    models = get_models()
+
+    print("Questi sono i modelli attualmente caricati:")
+    print()
+    
+    i = 0
+    for model in models:
+        i += 1
+        print(f'\t{i})  {model}')
+
+    print()
+    print("Quali vuoi testare ? ['a' Tutti, '1' Solo quello scelto, '1 2 5 4' Quelli elencati]")
+
+    scelta = input()
+    scelta = scelta.split(' ')
+
+    result = []
+
+    if scelta[0] == 'a':
+        result = models
+    else:
+        for elem in scelta:
+            result.append(models[int(elem)-1])
+
+    # aggiorna la variabile globale con la scelta effettuata
+    global ais
+    ais = result
+
+
 def main(args):
+    # stampa il menu di scelta e aggiorna la variabile
+    # globale di conseguenza
+    menu()
+
     # prende tutte le classi nel dataset
     all_classes = get_all_dirs(dataset_dir)
 
-    '''
-    # testa ogni modello
-    for ai in ais:
-        predictions = []
-        # classifica tutti i file (divisi per classe) del dataset
-        for clas in all_classes:
-            print(f'**** {clas.upper()} ****')
-
-            for image in get_all_dirs_files(clas):
-                res = predict(ai, image)
-                
-                print('. ', end='')
-
-                pred = PredictionData(ai, image, clas, res)
-                predictions.append(pred)
-            
-            print()
-
-        # scrive i risultati su file csv
-        f = open(f'{ai}.csv', 'w')
-        f.write(csv_header)
-
-        for pred in predictions:
-            f.write(pred.to_csv())
-            f.write('\n')
-
-        f.close()
-    '''
-    
+    # fa partire il test in modalita' multithread
     ts = []
     for ai in ais:
         t = Thread(target=worker, args=(ai, all_classes,))
