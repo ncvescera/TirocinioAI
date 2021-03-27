@@ -1,20 +1,29 @@
+from os import listdir
 from sys import argv
 import models
+from threading import Thread
+
+dataset_dir = '../dataset/imagenet-mini/val'
+
+
+def worker(model):
+    model.test(dataset_dir)
 
 
 def main(args):
+    # prende tutti i modelli disponibili
+    modelli = models.get_models()
 
-    models_fun = models.get_models()
-    
-    '''
-    res = models_fun['MobileNet'](args[0])
-    print(res)
-    '''
-    for key, fun in models_fun.items():
-        print(key)
+    ts = []
+    for key, model in modelli.items():
+        t = Thread(target=worker, args=(model,))
+        ts.append(t)
+        t.start()
 
-        res = fun(args[0])
-        print(res)
+    for t in ts:
+        t.join()
+    # testing del modello InceptionV3
+    # modelli['InceptionV3'].test(dataset_dir)
 
 
 if __name__ == "__main__":
