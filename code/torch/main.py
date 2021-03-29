@@ -38,22 +38,38 @@ def menu():
     return result
 
         
-def worker(model, name, all_classes):
+def worker(model, all_classes):
     predictions = []
 
     for clas in all_classes:
-        print(f'**** {name.upper()}  {clas.upper()} ****')
+        print(f'**** {model.name.upper()}  {clas.upper()} ****')
 
         for image in utils.get_all_dirs_files(clas):
-            res = predict(model, image)
+            res = model.predict(image)
 
-            pred = utils.PredictionData(name, image, clas, res)
+            pred = utils.PredictionData(model.name, image, clas, res)
             predictions.append(pred)
 
-    utils.save_csv(name, predictions)
+    utils.save_csv(model.name, predictions)
 
+
+# from models.AlexNet import AlexNet
+from models import get_models
 
 def main():
+    modelli = get_models()
+    all_dirs = utils.get_all_dirs(dataset_dir)
+
+    for name, modello in modelli.items():
+        worker(modello, all_dirs)
+    # print(mod)
+
+    '''
+    mod = AlexNet()
+    res = mod.predict('../dataset/imagenet-mini/val/n01806143/ILSVRC2012_val_00022422.JPEG')
+    print(res)
+    '''
+    '''
     models = menu()
     
     all_dirs = utils.get_all_dirs(dataset_dir)
@@ -66,7 +82,7 @@ def main():
 
     for t in ts:
         t.join()
-
+    '''
 
 if __name__ == '__main__':
     main()
