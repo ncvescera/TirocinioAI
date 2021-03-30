@@ -5,7 +5,7 @@ Dati e Codice prodotti durante il tirocinio
 
 Il dataset utilizzato per il testing è il seguente:
 
-![ImageNet Mini](https://www.kaggle.com/ifigotin/imagenetmini-1000)
+[ImageNet Mini](https://www.kaggle.com/ifigotin/imagenetmini-1000)
 
 Va posizionato nella stessa directory della cartella `code`:
 
