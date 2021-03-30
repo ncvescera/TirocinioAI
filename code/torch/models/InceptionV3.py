@@ -13,8 +13,13 @@ class InceptionV3(ProtoModel):
 
     def _init_model(self):
         self.model = models.inception_v3(pretrained=True)
-
-    def predict(self, image: str):
+    
+    # classifica l'immagine passata
+    # Ritorna una lista contenente 5 dizionari (TOP 5) del tipo:
+    #   {'class': 'classe predetta', 'probability': 0.2345134}
+    #
+    # image: path dell'immagine da classificare
+    def predict(self, image: str) -> list:
         # inizializza il modello la prima volta che viene chiamata questa funzione
         if self.model == None:
             self._init_model()

@@ -10,7 +10,8 @@ from .VGG19 import VGG19
 from .VGG19bn import VGG19bn
 
 
-def get_models():
+# ritorna un dizionario con tutti i modelli disponibili
+def get_models() -> dict:
     modelli = {
         'AlexNet': AlexNet(),
         'DenseNet201': DenseNet201(),

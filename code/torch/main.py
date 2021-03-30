@@ -1,13 +1,13 @@
 from sys import argv
 from threading import Thread
-
-from models_handler import predict, get_models
 import utils
-
+from models import get_models
 
 dataset_dir = '../dataset/imagenet-mini/val'
 
 
+# funzione per far scegliere all'utente quali modelli testare
+# [non è attualmente usata e va rivista]
 def menu():
     models = get_models()
 
@@ -37,13 +37,19 @@ def menu():
 
     return result
 
-        
-def worker(model, all_classes):
-    predictions = []
+
+# funzione che dovrà essere usata per il mutrithreading
+# testa il modello e scrive i risultati in un file csv
+#
+# model: modello che deve essere testato
+# all_classes: lista contenente tutte le cartelle (classi) del dataset
+def worker(model, all_classes: list):
+    predictions = []    # lista per salvare tutte le predizioni
 
     for clas in all_classes:
         print(f'**** {model.name.upper()}  {clas.upper()} ****')
 
+        # classifica ogni immagine della cartella (classe) e salva i risultati
         for image in utils.get_all_dirs_files(clas):
             res = model.predict(image)
 
@@ -53,16 +59,13 @@ def worker(model, all_classes):
     utils.save_csv(model.name, predictions)
 
 
-# from models.AlexNet import AlexNet
-from models import get_models
-
 def main():
-    modelli = get_models()
-    all_dirs = utils.get_all_dirs(dataset_dir)
+    modelli = get_models()                      # prende tutti i modelli disponibili
+    all_dirs = utils.get_all_dirs(dataset_dir)  # prende tutte le cartelle (classi) del dataset
 
+    # testa ogni modello
     for name, modello in modelli.items():
         worker(modello, all_dirs)
-    # print(mod)
 
     '''
     mod = AlexNet()
@@ -83,6 +86,7 @@ def main():
     for t in ts:
         t.join()
     '''
+
 
 if __name__ == '__main__':
     main()
