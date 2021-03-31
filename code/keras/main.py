@@ -3,9 +3,14 @@ from sys import argv
 import models
 from threading import Thread
 
+
 dataset_dir = '../dataset/imagenet-mini/val'
 
 
+# funzione utilizzata per il multithreading
+# Testa un dato modello
+#
+# model: modello da testare
 def worker(model):
     model.test(dataset_dir)
 
@@ -41,6 +46,9 @@ def menu():
     return result
 
 
+# scarica tutti i modelli disponibili
+# andrebbe eseguita prima della fase di testing per assicurarsi 
+# che siano presenti tutti i modelli
 def download_all():
     modelli = models.get_models()
 

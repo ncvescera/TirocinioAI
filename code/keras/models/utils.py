@@ -41,6 +41,9 @@ def get_all_dirs_files(folder: str) -> list:
 
 csv_header = 'image;probability;guess_class;real_class;other_predictions'
 
+
+# classe che contiene tutti i dati delle predizioni di un modello
+# utilizzata per salvare i dati in csv
 class PredictionData:
     def __init__(self, model, image, real_class, data):
         self.model = model
@@ -52,11 +55,15 @@ class PredictionData:
         return f'{self.image};{self.data[0]["probability"]};{self.data[0]["class"]};{self.real_class};{self.data}'
 
 
+# salva i dati di un modello in csv
+#
+# name: nome del modello (sarà il nome che avrà il file csv)
+# predictions: lista con tutte le predizioni del modello (PredictionData)
 def save_csv(name: str, predictions: list):
     # scrive i risultati su file csv
     f = open(f'{name}.csv', 'w')
     f.write(csv_header)
-    f.write('\n')
+    f.write('\n') # i ritorni a capo sono importanti per il csv
 
     for pred in predictions:
         f.write(pred.to_csv())

@@ -8,7 +8,9 @@ from .ResNet152V2Model import ResNet152V2Model
 from .DenseNet201Model import DenseNet201Model
 from .EfficientNetB7Model import EfficientNetB7Model
 
-def get_models():
+
+# ritorna un dizionario con tutti i modelli disponibili
+def get_models() -> dict:
     models = {
         'ResNet50': ResNet50Model(),
         'MobileNet': MobileNetModel(),
