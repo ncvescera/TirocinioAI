@@ -5,6 +5,8 @@ Nelle cartelle `keras` e `torch` ci sono gli script in python per il testing dei
 Ricordarsi sempre di modificare la variabile `dataset_dir` (presente nei file `main.py`) con il corretto percorso della cartella del dataset.<br>
 Nel dubbio controllare sempre quella di default e provarla.
 
+## Analyze.py
+
 Lo script `analyze.py` serve per estrapolare le statistiche dai vari file csv generati durante la fase di testing.<br>
 Si usa nel seguente modo:
 
