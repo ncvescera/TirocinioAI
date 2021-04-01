@@ -1,6 +1,15 @@
 # TirocinioAI
 Dati e Codice prodotti durante il tirocinio
 
+## Jupyter Notebooks
+
+Se non hai il coraggio di affrontare un'installazione in locale sono disponibili i notebook per effettuare la fase di testing su Google Colab:
+
+* [Keras_Model_Testing.ipynb](./code/keras/Keras_Model_Testing.ipynb)
+* [PyTorch_Model_Testing.ipynb](./code/torch/PyTorch_Model_Testing.ipynb)
+
+Se sei un vero uomo 🐒 segui le istruzioni successive !
+
 ## Installazione
 
 ### Preparazione
