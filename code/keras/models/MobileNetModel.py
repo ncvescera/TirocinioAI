@@ -21,14 +21,28 @@ class MobileNetModel:
     #   {'class': 'classe predetta', 'probability': 0.2348172}
     # Ogni elemento della lista è una predizione: contiene i primi 5 risultati (TOP 5)
     # Ci saranno tanti elementi nella lista finali quante immagini
-    def predict(self, imgs: list) -> list:
+    #
+    # gscale: se 'True' le immagini verranno convertite in GrayScale
+    def predict(self, imgs: list, gscale=False) -> list:
         results = []
         for img in imgs:
             img_path = img
 
-            # carica l'immagine con la grandezza minima richiesta dal modello
-            img = image.load_img(img_path, target_size=(224, 224))
+            # sceglie se caricare l'immagine in grayscale o rgb
+            # di defaul è RGB
+            img_type = 'rgb'
+            if gscale:
+                img_type = 'grayscale'
 
+            # carica l'immagine con la grandezza minima richiesta dal modello
+            img = image.load_img(img_path, target_size=(224, 224), color_mode=img_type)
+            
+            # questo passaggio va fatto perchè l'immagine caricata in GrayScale ha una forma che non va bene
+            # al classificatore ! Va quindi aperta in GrayScale e poi convertita in RGB per avere la giusta forma.
+            # L'immagine rimane in bianco e nero ma così piace al classificatore
+            if gscale:
+                img = img.convert('RGB')
+            
             # processa l'immagine per la classificazione
             x = image.img_to_array(img)
             x = np.expand_dims(x, axis=0)
@@ -45,17 +59,17 @@ class MobileNetModel:
         return results
 
     # testa il modello con tutte le immagini del dataset passatogli
-    def test(self, dataset_path: str):
+    def test(self, dataset_path: str, gscale=False):
         all_classes = get_all_dirs(dataset_path)    # prende tutte le cartelle (classi) del dataset
-        
+
         # classifica tutti i file (divisi per classe) del dataset
         predictions = []
         for clas in all_classes:
             print(f'**** {self.name.upper()}  {clas.upper()} ****')
 
             for image in get_all_dirs_files(clas):
-                res = self.predict([image])[0]  # prende il primo risultato dato che la lista ritornata
-                                                # avrà un unico risultato (gli viene passata solo 1 immagine)
+                res = self.predict([image], gscale)[0]  # prende il primo risultato dato che la lista ritornata
+                                                        # avrà un unico risultato (gli viene passata solo 1 immagine)
                 
                 # print('. ', end='')
 

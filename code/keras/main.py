@@ -5,14 +5,14 @@ from threading import Thread
 
 
 dataset_dir = '../dataset/imagenet-mini/val'
-
+MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
 
 # funzione utilizzata per il multithreading
 # Testa un dato modello
 #
 # model: modello da testare
-def worker(model):
-    model.test(dataset_dir)
+def worker(model, gscale: bool):
+    model.test(dataset_dir, gscale)
 
 
 # permette all'utente di scegliere quali modelli testare (tra quelli disponibili)
@@ -56,15 +56,42 @@ def download_all():
         modello
 
 
+# stampa a video tutti i possibili argomenti che accetta lo script
+# [dovrà essere modificato con argparse]
+def help():
+    print('Questi sono gli argomenti passabili allo scritp:')
+    print()
+    print('\t-g\tApplica il filtro GrayScale alle immagini prima di essere classificate')
+    print('\t-d\tProva a scaricare tutti i modelli e si ferma')
+    print()
+
+
 def main(args):
+    gscale = False
+
     # prova a scaricare tutti i modelli
-    if len(args) > 0 and args[0] == '-d':
-        print('Download all Models data ...')
-        download_all()
-        return
+    if len(args) > 0:
+        if args[0] == '-d':
+            print('Download all Models data ...')
+            download_all()
+            return
+        
+        if args[0] == '--help':
+            help()
+            return
+
+        if args[0] == '-g':
+            gscale = True
     
     modelli = menu()
 
+    for model in modelli:
+        worker(model, gscale)
+
+    '''
+    # vecchia versione multithrading
+    # permette di eseguire troppi thread contemporaneamente
+    # mettendo in crisi il sistema
     ts = []
     for model in modelli:
         t = Thread(target=worker, args=(model,))
@@ -73,7 +100,34 @@ def main(args):
 
     for t in ts:
         t.join()
-    
+    '''
+
+    '''
+    # probabile versione multithreading sensata
+    ts = None   # lista contenente i thread attivi
+    i = 0       # variabile per contare quanti thread sono stati creati
+    for model in modelli:
+        ts = []                                             # inizializza la nuova lista
+
+        t = Thread(target=worker, args=(model, gscale,))    # creazione del thread
+        ts.append(t)                                        # aggiunta del thread alla lista
+        t.start()                                           # il thread viene avviato
+        
+        i += 1
+
+        # quando 3 thread vengono avviati aspetta la loro fine
+        # per poi avvirane altri 3 al ciclo successivo
+        if i == MAX_THREAD_NUMBER:
+            for t in ts:
+                t.join()
+            
+            i = 0
+
+    # attende la fine degli ultimi thread avviati
+    # non è sempre detto che i thread finiscano nel for precedente
+    for t in ts:
+        t.join()
+    '''
     # testing del modello InceptionV3
     # modelli['InceptionV3'].test(dataset_dir)
 
