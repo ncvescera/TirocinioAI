@@ -1,5 +1,3 @@
-from os import listdir
-# from sys import argv
 import models
 from threading import Thread
 import argparse
@@ -7,6 +5,7 @@ import argparse
 
 dataset_dir = '../dataset/imagenet-mini/val'
 MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
+
 
 # funzione utilizzata per il multithreading
 # Testa un dato modello
@@ -55,16 +54,6 @@ def download_all():
 
     for key, modello in modelli.items():
         modello
-
-
-# stampa a video tutti i possibili argomenti che accetta lo script
-# [dovrà essere modificato con argparse]
-def help():
-    print('Questi sono gli argomenti passabili allo scritp:')
-    print()
-    print('\t-g\tApplica il filtro GrayScale alle immagini prima di essere classificate')
-    print('\t-d\tProva a scaricare tutti i modelli e si ferma')
-    print()
 
 
 def main(args):
