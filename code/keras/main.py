@@ -1,7 +1,8 @@
 from os import listdir
-from sys import argv
+# from sys import argv
 import models
 from threading import Thread
+import argparse
 
 
 dataset_dir = '../dataset/imagenet-mini/val'
@@ -67,43 +68,25 @@ def help():
 
 
 def main(args):
-    gscale = False
+    gscale = args.grayscale
 
-    # prova a scaricare tutti i modelli
-    if len(args) > 0:
-        if args[0] == '-d':
-            print('Download all Models data ...')
-            download_all()
-            return
-        
-        if args[0] == '--help':
-            help()
-            return
+    if args.download:
+        print('Download all Models data ...')
+        download_all()
+        return
 
-        if args[0] == '-g':
-            gscale = True
-    
+    # gscale = args.grayscale
+
     modelli = menu()
 
-    for model in modelli:
-        worker(model, gscale)
-
-    '''
-    # vecchia versione multithrading
-    # permette di eseguire troppi thread contemporaneamente
-    # mettendo in crisi il sistema
-    ts = []
-    for model in modelli:
-        t = Thread(target=worker, args=(model,))
-        ts.append(t)
-        t.start()
-
-    for t in ts:
-        t.join()
-    '''
-
-    '''
-    # probabile versione multithreading sensata
+    # avvia la modalità sequenziale
+    if args.nothreads:
+        for model in modelli:
+            worker(model, gscale)
+    
+        return
+    
+    # versione multithreading sensata
     ts = None   # lista contenente i thread attivi
     i = 0       # variabile per contare quanti thread sono stati creati
     for model in modelli:
@@ -127,10 +110,21 @@ def main(args):
     # non è sempre detto che i thread finiscano nel for precedente
     for t in ts:
         t.join()
-    '''
+
     # testing del modello InceptionV3
     # modelli['InceptionV3'].test(dataset_dir)
 
 
 if __name__ == "__main__":
-    main(argv[1:])
+    # creazione del parser
+    parser = argparse.ArgumentParser(description="Script per testare alcuni modelli di Image Classification di Keras")
+
+    # definizione degli argomenti che accetta lo script
+    parser.add_argument("-g", "--grayscale", help="Applica a tutte le immaigni il filtro GrayScale.", action="store_true")
+    parser.add_argument("-d", "--download", help="Scarica i modelli e termina lo script.", action="store_true")
+    parser.add_argument("--nothreads", help="Esegue il testing in meniera sequenziale senza multithreading", action="store_true")
+
+    # crea gli argomenti da passare alla funzione main
+    args = parser.parse_args()
+
+    main(args)
