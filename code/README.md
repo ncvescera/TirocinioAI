@@ -5,6 +5,32 @@ Nelle cartelle `keras` e `torch` ci sono gli script in python per il testing dei
 Ricordarsi sempre di modificare la variabile `dataset_dir` (presente nei file `main.py`) con il corretto percorso della cartella del dataset.<br>
 Nel dubbio controllare sempre quella di default e provarla.
 
+## Main.py
+
+Il file `main.py`, presente sia in `Keras` che in `PyTorch`, serve per avviare la fase di testing dei rispettivi modelli.
+
+Con il comando `python main.py --help` è possibile stampare a video la pagina di aiuto.
+
+```
+python main.py --help
+
+usage: main.py [-h] [-g] [-d] [--nothreads]
+
+Script per testare alcuni modelli di Image Classification di Keras
+
+optional arguments:
+  -h, --help       show this help message and exit
+  -g, --grayscale  Applica a tutte le immaigni il filtro GrayScale.
+  -d, --download   Scarica i modelli e termina lo script.
+  --nothreads      Esegue il testing in meniera sequenziale senza multithreading
+```
+
+Di seguito una breve spiegazione degli argomenti che accetta `main.py`:
+
+* `-g` o `--grayscale`: serve per avviare il test in modalità **GrayScale**. In questa modalità tutte le immagini di qualsiasi modello verranno prima trasformate in bianco e nero (GrayScale) e successivamente passate la classificatore.
+* `-d` o `--download`: controlla se tutti i modelli necessari al funzionamento dello script sono stati già scaricati, in caso contrario li scarica ed interrompe lo script.
+* `--nothreads`: forza il funzionamento dello script in modalità **single-thread**. Lo script di defaulto funziona in multithreading: per ogni modello scelto avvia un nuovo thread che avrà il compito di gestire il test del singolo modello. Vengono avviati **3 thread** alla volta per evitare che si occupi troppa CPU. Il numero di thread massimi alla volta può essere sempre modificato cambiando il valore della variabile `MAX_THREAD_NUMBER` presente all'inizio del file `main.py`
+
 ## Analyze.py
 
 Lo script `analyze.py` serve per estrapolare le statistiche dai vari file csv generati durante la fase di testing.<br>
