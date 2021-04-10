@@ -1,7 +1,7 @@
 from sys import argv
 from threading import Thread
 from models import get_models
-
+import argparse
 
 dataset_dir = '../dataset/imagenet-mini/val'
 MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
@@ -47,9 +47,16 @@ def worker(model, gscale=False):
     model.test(dataset_dir)
 
 
-def main():
-    gscale = False
-    modelli = menu()                      # prende tutti i modelli disponibili
+def main(args):
+    gscale = args.grayscale         # variabile per attivare filtro GrayScale     
+    modelli = menu()                # prende tutti i modelli disponibili
+
+    # avvia il test in modalita' single thread
+    if args.nothreads:
+        for model in modelli:
+            worker(model, gscale)
+
+        return
 
     # versione multithreading sensata
     ts = None   # lista contenente i thread attivi
@@ -78,4 +85,15 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # creazione del parser
+    parser = argparse.ArgumentParser(description="Script per testare alcuni modelli di Image Classification di PyTorch")
+
+    # definizione degli argomenti che accetta lo script
+    parser.add_argument("-g", "--grayscale", help="Applica a tutte le immaigni il filtro GrayScale.", action="store_true")
+    parser.add_argument("-d", "--download", help="Scarica i modelli e termina lo script.", action="store_true")
+    parser.add_argument("--nothreads", help="Esegue il testing in meniera sequenziale senza multithreading", action="store_true")
+
+    # crea gli argomenti da passare alla funzione main
+    args = parser.parse_args()
+
+    main(args)
