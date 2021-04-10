@@ -11,6 +11,7 @@ class VGG16(ProtoModel):
         self.model = None
         self.img_size = (224, 244)
 
+    # funzione per la lateinit del modello
     def _init_model(self):
         self.model = models.vgg16(pretrained=True)
 
@@ -29,5 +30,9 @@ class VGG16(ProtoModel):
 
         return res
 
-    def test(self):
-        pass
+    # testa il modello con tutte le immagini del dataset 
+    # e scrive un file csv con i risultati
+    #
+    # dataset_path: percorso del dataset da utilizzare
+    def test(self, dataset_path: list):
+        self.proto_test(self.name, dataset_path, self.predict)

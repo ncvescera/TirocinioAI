@@ -3,6 +3,7 @@ import torch
 import torchvision.models as models
 from torchvision import transforms
 from PIL import Image
+from .utils import get_all_dirs, get_all_dirs_files, PredictionData, save_csv
 
 
 # Classe che deve essere estesa dalle varie classi che rappresentano i modelli
@@ -73,3 +74,26 @@ class ProtoModel:
             result.append({'class': label, 'probability': prob/100})
 
         return result
+
+    # testa il modello con tutte le immagini del dataset passatogli.
+    # scrive un file CSV con i risultati del test.
+    #
+    # name: nome del modello che sara' il nome del file csv e verra' utilizzato per alcune stampe
+    # dataset_path: percorso del dataset utilizzato per il test
+    # predict_function: funzione utilizzata per la predizione della singola immagine
+    def proto_test(self, name: str, dataset_path: str, predict_function):
+        all_classes = get_all_dirs(dataset_path)    # prende tutte le cartelle (classi) del dataset
+        predictions = []                            # lista per salvare tutte le predizioni
+
+        for clas in all_classes:
+            print(f'**** {name.upper()}  {clas.upper()} ****')
+
+            # classifica ogni immagine della cartella (classe) e salva i risultati
+            for image in get_all_dirs_files(clas):
+                res = predict_function(image)
+
+                pred = PredictionData(name, image, clas, res)
+                predictions.append(pred)
+
+        # salva i risultati in un file csv
+        save_csv(name, predictions)

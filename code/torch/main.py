@@ -1,39 +1,39 @@
 from sys import argv
 from threading import Thread
-import utils
 from models import get_models
 
+
 dataset_dir = '../dataset/imagenet-mini/val'
+MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
 
 
-# funzione per far scegliere all'utente quali modelli testare
-# [non è attualmente usata e va rivista]
+# permette all'utente di scegliere quali modelli testare (tra quelli disponibili)
 def menu():
-    models = get_models()
+    # prende tutti i modelli disponibili
+    modelli = get_models()
+    modelli = list(modelli.values())
 
-    print('Questi sono i modelli disponibili:')
+    print("Questi sono i modelli disponibili: ")
     print()
-
-    keys = list(models.keys())
 
     i = 1
-    for key in keys:
-        print(f'\t{i}) {key}')
+    for model in modelli:
+        print(f'\t{i})  {model.name}')
         i += 1
-    print()
 
-    print("Scegli quali modelli vuoi testare: ['a' Tutti, '1' Solo quello scelto, '1 4 2 3' Solo quelli scelti]")
+    print()
+    print("Quali vuoi scegliere ? ['a' Tutti, '1' Solo quello scelto, '1 3 2 4' Solo quelli elencati]")
 
     scelta = input()
     scelta = scelta.split(' ')
 
-    result = {}
+    result = []
     if scelta[0] == 'a':
-        result = models
+        result = modelli
     else:
+        result = []
         for elem in scelta:
-            # result.append(models[keys[int(elem)-1]])
-            result[keys[int(elem)-1]] = models[keys[int(elem)-1]]
+            result.append(modelli[int(elem)-1])
 
     return result
 
@@ -42,50 +42,39 @@ def menu():
 # testa il modello e scrive i risultati in un file csv
 #
 # model: modello che deve essere testato
-# all_classes: lista contenente tutte le cartelle (classi) del dataset
-def worker(model, all_classes: list):
-    predictions = []    # lista per salvare tutte le predizioni
-
-    for clas in all_classes:
-        print(f'**** {model.name.upper()}  {clas.upper()} ****')
-
-        # classifica ogni immagine della cartella (classe) e salva i risultati
-        for image in utils.get_all_dirs_files(clas):
-            res = model.predict(image)
-
-            pred = utils.PredictionData(model.name, image, clas, res)
-            predictions.append(pred)
-
-    utils.save_csv(model.name, predictions)
+# gscale: se 'True' avvia il testing con le immagini convertite in GrayScale
+def worker(model, gscale=False):
+    model.test(dataset_dir)
 
 
 def main():
-    modelli = get_models()                      # prende tutti i modelli disponibili
-    all_dirs = utils.get_all_dirs(dataset_dir)  # prende tutte le cartelle (classi) del dataset
+    gscale = False
+    modelli = menu()                      # prende tutti i modelli disponibili
 
-    # testa ogni modello
-    for name, modello in modelli.items():
-        worker(modello, all_dirs)
+    # versione multithreading sensata
+    ts = None   # lista contenente i thread attivi
+    i = 0       # variabile per contare quanti thread sono stati creati
+    for model in modelli:
+        ts = []                                             # inizializza la nuova lista
 
-    '''
-    mod = AlexNet()
-    res = mod.predict('../dataset/imagenet-mini/val/n01806143/ILSVRC2012_val_00022422.JPEG')
-    print(res)
-    '''
-    '''
-    models = menu()
-    
-    all_dirs = utils.get_all_dirs(dataset_dir)
+        t = Thread(target=worker, args=(model, gscale,))    # creazione del thread
+        ts.append(t)                                        # aggiunta del thread alla lista
+        t.start()                                           # il thread viene avviato
+        
+        i += 1
 
-    ts = []
-    for name, model in models.items():
-        t = Thread(target=worker, args=(model, name, all_dirs,))
-        ts.append(t)
-        t.start()
+        # quando 3 thread vengono avviati aspetta la loro fine
+        # per poi avvirane altri 3 al ciclo successivo
+        if i == MAX_THREAD_NUMBER:
+            for t in ts:
+                t.join()
+            
+            i = 0
 
+    # attende la fine degli ultimi thread avviati
+    # non è sempre detto che i thread finiscano nel for precedente
     for t in ts:
         t.join()
-    '''
 
 
 if __name__ == '__main__':

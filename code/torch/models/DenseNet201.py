@@ -11,6 +11,7 @@ class DenseNet201(ProtoModel):
         self.model = None
         self.img_size = (224, 244)
 
+    # funzione per la lateinit del modello
     def _init_model(self):
         self.model = models.densenet201(pretrained=True)
 
@@ -25,9 +26,13 @@ class DenseNet201(ProtoModel):
             self._init_model()
         
         img = self.prepare_image(image, img_size=self.img_size) # prepara l'immagine per essere classificata
-        res = self.predict_proto(self.model, img)   # classifica l'immagine
+        res = self.predict_proto(self.model, img)               # classifica l'immagine
 
         return res
 
-    def test(self):
-        pass
+    # testa il modello con tutte le immagini del dataset 
+    # e scrive un file csv con i risultati
+    #
+    # dataset_path: percorso del dataset da utilizzare
+    def test(self, dataset_path: list):
+        self.proto_test(self.name, dataset_path, self.predict)
