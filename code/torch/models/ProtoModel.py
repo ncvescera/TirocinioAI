@@ -28,9 +28,25 @@ class ProtoModel:
     # apre l'immagine passata (img_path) e la prepara per la classificazione
     #
     # img_path: percorso dove si trova l'immagine
-    # img_size: sarà la nuova dimenzione dell'immagine.
-    #           Serve per alcuni modelli come la InceptionV3 che necessitano di immagini superiori ad una certa dimenzione
-    def prepare_image(self, img_path: str, img_size=(224, 244)) -> torch.tensor:
+    # img_resize, img_crop: sono valori specifici per ogni modello 
+    #                       e servono per adattare l'immagine all'input del classificatore
+    def prepare_image(self, img_path: str, img_resize: int, img_crop: int) -> torch.tensor:
+        img = Image.open(img_path).convert('RGB')   # apre l'immagine e forza la lettura in RGB
+                                                    # serve per impedire l'apertura di alcune immagini in GrayScale
+
+        normalize = transforms.Compose([
+                transforms.Resize(img_resize),
+                transforms.CenterCrop(img_crop),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+
+        input_tensor = normalize(img)
+        input_batch = input_tensor.unsqueeze(0) # adatta la forma dell'immagine modificata per il modello
+
+        return input_batch
+
+        '''
         img = Image.open(img_path).convert('RGB')       # forza la lettura dell'immagine come RGB
         img = transforms.ToTensor()(img).unsqueeze_(0)  # converte l'immagine in un tensore per essere normalizzata
                                                         # serve per rendere più facile la normalizzazione e la classificazione
@@ -51,6 +67,7 @@ class ProtoModel:
         img = normalize(img)  # normalizza l'immagine per poter essere classificata
 
         return img
+        '''
 
     # classifica l'immagine dato un qualunque modello
     # Ritorna una lista contenente 5 dizioniri (TOP 5) del tipo:
@@ -59,12 +76,11 @@ class ProtoModel:
     # model: modello per classificare l'immagine
     # image: tensore pronto per essere classificato
     def predict_proto(self, model, image: torch.tensor) -> list:
-        model.eval()    # deve essere messo durante se non si fa training
-        
         out = model(image) # classifica l'immagine
 
         # prende i primi 5 risultati con relative precisioni
         percentage = torch.nn.functional.softmax(out, dim=1)[0] * 100
+        
         _, indices = torch.sort(out, descending=True)
         result_tmp = [(self.classes[idx], percentage[idx].item()) for idx in indices[0][:5]]
 

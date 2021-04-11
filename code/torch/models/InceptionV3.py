@@ -9,12 +9,14 @@ class InceptionV3(ProtoModel):
 
         self.name = 'InceptionV3'
         self.model = None
-        self.img_size = (299, 299)
+        self.img_resize = 299
+        self.img_crop = 299
 
     # funzione per la lateinit del modello
     def _init_model(self):
         self.model = models.inception_v3(pretrained=True)
-    
+        self.model.eval()    # disabilita la fase di training e permette di testare il modello
+
     # classifica l'immagine passata
     # Ritorna una lista contenente 5 dizionari (TOP 5) del tipo:
     #   {'class': 'classe predetta', 'probability': 0.2345134}
@@ -25,7 +27,7 @@ class InceptionV3(ProtoModel):
         if self.model == None:
             self._init_model()
         
-        img = self.prepare_image(image, img_size=self.img_size) # prepara l'immagine per essere classificata
+        img = self.prepare_image(image, self.img_resize, self.img_crop) # prepara l'immagine per essere classificata
         res = self.predict_proto(self.model, img)   # classifica l'immagine
 
         return res
