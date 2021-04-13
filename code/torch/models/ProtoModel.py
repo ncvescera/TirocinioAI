@@ -46,28 +46,6 @@ class ProtoModel:
 
         return input_batch
 
-        '''
-        img = Image.open(img_path).convert('RGB')       # forza la lettura dell'immagine come RGB
-        img = transforms.ToTensor()(img).unsqueeze_(0)  # converte l'immagine in un tensore per essere normalizzata
-                                                        # serve per rendere più facile la normalizzazione e la classificazione
-        
-        # altro modo per la normalizzazione che e' un po bruttino
-        # normalize = transforms.Normalize(
-        #    mean=[0.485, 0.456, 0.406],
-        #    std=[0.229, 0.224, 0.225]
-        #)
-
-        # istruzioni per la preparazione dell'immagine
-        normalize = transforms.Compose([
-                transforms.Resize(img_size),    # scala l'immagine con le date misure
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                # transforms.ToTensor()
-        ])
-
-        img = normalize(img)  # normalizza l'immagine per poter essere classificata
-
-        return img
-        '''
 
     # classifica l'immagine dato un qualunque modello
     # Ritorna una lista contenente 5 dizioniri (TOP 5) del tipo:
