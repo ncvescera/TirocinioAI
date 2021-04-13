@@ -22,13 +22,14 @@ class InceptionV3(ProtoModel):
     #   {'class': 'classe predetta', 'probability': 0.2345134}
     #
     # image: path dell'immagine da classificare
-    def predict(self, image: str) -> list:
+    # grayScale: se 'True', applica alle immagini il filtro GrayScale
+    def predict(self, image: str, grayScale=False) -> list:
         # inizializza il modello la prima volta che viene chiamata questa funzione
         if self.model == None:
             self._init_model()
         
-        img = self.prepare_image(image, self.img_resize, self.img_crop) # prepara l'immagine per essere classificata
-        res = self.predict_proto(self.model, img)   # classifica l'immagine
+        img = self.prepare_image(image, self.img_resize, self.img_crop, grayScale=grayScale) # prepara l'immagine per essere classificata
+        res = self.predict_proto(self.model, img)                                            # classifica l'immagine
 
         return res
 
@@ -36,5 +37,6 @@ class InceptionV3(ProtoModel):
     # e scrive un file csv con i risultati
     #
     # dataset_path: percorso del dataset da utilizzare
-    def test(self, dataset_path: list):
-        self.proto_test(self.name, dataset_path, self.predict)
+    # grayScale: se 'True', applica alle immagini il filtro GrayScale
+    def test(self, dataset_path: list, grayScale=False):
+        self.proto_test(self.name, dataset_path, self.predict, grayScale=grayScale)

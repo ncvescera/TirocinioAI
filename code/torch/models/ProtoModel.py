@@ -30,9 +30,16 @@ class ProtoModel:
     # img_path: percorso dove si trova l'immagine
     # img_resize, img_crop: sono valori specifici per ogni modello 
     #                       e servono per adattare l'immagine all'input del classificatore
-    def prepare_image(self, img_path: str, img_resize: int, img_crop: int) -> torch.tensor:
-        img = Image.open(img_path).convert('RGB')   # apre l'immagine e forza la lettura in RGB
-                                                    # serve per impedire l'apertura di alcune immagini in GrayScale
+    # grayScale: se 'True', applica alle immagini il filtro GrayScale
+    def prepare_image(self, img_path: str, img_resize: int, img_crop: int, grayScale=False) -> torch.tensor:
+        img = Image.open(img_path)                  # apre l'immagine
+                                                    
+        # converte l'immagine in GrayScale quando scelto
+        if grayScale:
+            img = img.convert('L')
+        
+        img = img.convert('RGB')                    # forza la conversione dell'immagine in GrayScale
+                                                    # serve per impedire l'apertura di alcune immagini in GrayScale quando non richiesto
 
         normalize = transforms.Compose([
                 transforms.Resize(img_resize),
@@ -75,19 +82,24 @@ class ProtoModel:
     # name: nome del modello che sara' il nome del file csv e verra' utilizzato per alcune stampe
     # dataset_path: percorso del dataset utilizzato per il test
     # predict_function: funzione utilizzata per la predizione della singola immagine
-    def proto_test(self, name: str, dataset_path: str, predict_function):
+    # grayScale: se 'True', applica alle immagini il filtro GrayScale
+    def proto_test(self, name: str, dataset_path: str, predict_function, grayScale=False):
         all_classes = get_all_dirs(dataset_path)    # prende tutte le cartelle (classi) del dataset
         predictions = []                            # lista per salvare tutte le predizioni
 
         for clas in all_classes:
-            print(f'**** {name.upper()}  {clas.upper()} ****')
+            print(f'**** {"[GRAY]" if grayScale else ""} {name.upper()}  {clas.upper()} ****')
 
             # classifica ogni immagine della cartella (classe) e salva i risultati
             for image in get_all_dirs_files(clas):
-                res = predict_function(image)
+                res = predict_function(image, grayScale=grayScale)
 
                 pred = PredictionData(name, image, clas, res)
                 predictions.append(pred)
+
+        # modifica il nome del file per GrayScale
+        if grayScale:
+            name = f'g_{name}'
 
         # salva i risultati in un file csv
         save_csv(name, predictions)

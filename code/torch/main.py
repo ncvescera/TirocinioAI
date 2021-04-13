@@ -44,7 +44,7 @@ def menu():
 # model: modello che deve essere testato
 # gscale: se 'True' avvia il testing con le immagini convertite in GrayScale
 def worker(model, gscale=False):
-    model.test(dataset_dir)
+    model.test(dataset_dir, grayScale=gscale)
 
 
 def main(args):
