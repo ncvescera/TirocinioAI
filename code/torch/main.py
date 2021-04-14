@@ -4,6 +4,7 @@ from models import get_models
 import argparse
 
 dataset_dir = '../dataset/imagenet-mini/val'
+aline = '../dataset/ALine'
 MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
 
 
@@ -48,6 +49,19 @@ def worker(model, gscale=False):
 
 
 def main(args):
+    # controlla se il dataset scelto e' giusto
+    if args.dataset is not None:
+        if args.dataset == 'ALine':
+            global dataset_dir
+            dataset_dir = aline
+        
+        elif args.dataset == 'ImageNet':
+            pass
+        
+        else:   # se la scelta e' sbagliata interrompe il programma
+            print('Dataset inesistente, controlla meglio !')
+            return
+
     gscale = args.grayscale         # variabile per attivare filtro GrayScale     
     modelli = menu()                # prende tutti i modelli disponibili
 
@@ -92,6 +106,8 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--grayscale", help="Applica a tutte le immaigni il filtro GrayScale.", action="store_true")
     parser.add_argument("-d", "--download", help="Scarica i modelli e termina lo script.", action="store_true")
     parser.add_argument("--nothreads", help="Esegue il testing in meniera sequenziale senza multithreading", action="store_true")
+
+    parser.add_argument("--dataset", type=str, help="Seleziona il dataset con cui testare i modelli.\nScelte: ALine | ImageNet")
 
     # crea gli argomenti da passare alla funzione main
     args = parser.parse_args()
