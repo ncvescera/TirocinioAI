@@ -73,11 +73,9 @@ def main(args):
         return
 
     # versione multithreading sensata
-    ts = None   # lista contenente i thread attivi
+    ts = []   # lista contenente i thread attivi
     i = 0       # variabile per contare quanti thread sono stati creati
     for model in modelli:
-        ts = []                                             # inizializza la nuova lista
-
         t = Thread(target=worker, args=(model, gscale,))    # creazione del thread
         ts.append(t)                                        # aggiunta del thread alla lista
         t.start()                                           # il thread viene avviato
@@ -86,11 +84,12 @@ def main(args):
 
         # quando 3 thread vengono avviati aspetta la loro fine
         # per poi avvirane altri 3 al ciclo successivo
-        if i == MAX_THREAD_NUMBER:
+        if i >= MAX_THREAD_NUMBER:
             for t in ts:
                 t.join()
-            
-            i = 0
+
+            ts = []             # resetta la lista
+            i = 0               # resetta il contatore
 
     # attende la fine degli ultimi thread avviati
     # non è sempre detto che i thread finiscano nel for precedente
@@ -106,7 +105,6 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--grayscale", help="Applica a tutte le immaigni il filtro GrayScale.", action="store_true")
     parser.add_argument("-d", "--download", help="Scarica i modelli e termina lo script.", action="store_true")
     parser.add_argument("--nothreads", help="Esegue il testing in meniera sequenziale senza multithreading", action="store_true")
-
     parser.add_argument("--dataset", type=str, help="Seleziona il dataset con cui testare i modelli.\nScelte: ALine | ImageNet")
 
     # crea gli argomenti da passare alla funzione main
