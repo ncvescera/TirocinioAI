@@ -3,13 +3,19 @@ from threading import Thread
 from models import get_models
 import argparse
 
+
 dataset_dir = '../dataset/imagenet-mini/val'
 aline = '../dataset/ALine'
 MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
 
 
-# permette all'utente di scegliere quali modelli testare (tra quelli disponibili)
-def menu():
+def menu() -> dict:
+    """Permette all'utente di scegliere quali modelli testare (tra quelli disponibili)
+
+        Return:
+            dict{str: ProtoModel}: modelli scelti dall'utente che andranno testati
+    """
+
     # prende tutti i modelli disponibili
     modelli = get_models()
     modelli = list(modelli.values())
@@ -39,12 +45,15 @@ def menu():
     return result
 
 
-# funzione che dovrà essere usata per il mutrithreading
-# testa il modello e scrive i risultati in un file csv
-#
-# model: modello che deve essere testato
-# gscale: se 'True' avvia il testing con le immagini convertite in GrayScale
+
 def worker(model, gscale=False):
+    """Testa il modello e scrive i risultati in un file csv
+
+        Parameters:
+            model (ProtoModel)  : modello che deve essere testato
+            gscale (bool)       : se 'True' avvia il testing con le immagini convertite in GrayScale
+    """
+
     model.test(dataset_dir, grayScale=gscale)
 
 

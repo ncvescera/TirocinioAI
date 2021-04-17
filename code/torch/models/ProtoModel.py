@@ -6,32 +6,45 @@ from PIL import Image
 from .utils import get_all_dirs, get_all_dirs_files, PredictionData, save_csv
 
 
-# Classe che deve essere estesa dalle varie classi che rappresentano i modelli
-# Contiene i metodi per caricare le varie classi di ImageNet, preparare l'immagine per essere passata al modello
-# e per interpretare i risultati della classificazione
 class ProtoModel:
+    """Superclasse da cui devono derivare tutti i modelli
+        Classe che deve essere estesa dalle varie classi che rappresentano i modelli.
+        Contiene i metodi per caricare le varie classi di ImageNet, preparare l'immagine per essere passata al modello
+        e per interpretare i risultati della classificazione
+    """
+    
     def __init__(self):
         self.classes_file_path = './imagenet_class_index.json'
         self.classes = self.load_classes()  # carica le classi di ImageNet
 
-    # ritorna una lista che rappresenta le classi di ImageNet
-    # E' formata come segue:
-    #       0 -> prima classe di ImageNet
-    #       1 -> seconda classe di ImageNet
-    #       ...
     def load_classes(self) -> list:
+        """Ritorna le classi di ImageNet
+
+            Return:
+                list: ritorna una lista che rappresenta le classi di ImageNet
+                    E' formata come segue:
+                        0 -> prima classe di ImageNet
+                        1 -> seconda classe di ImageNet
+                        ...
+        """
+
         class_idx = json.load(open(self.classes_file_path, 'r')) # converte il file json in array
         idx2label = [f'{class_idx[str(k)][0]} {class_idx[str(k)][1]}' for k in range(len(class_idx))] # crea la lista
 
         return idx2label
 
-    # apre l'immagine passata (img_path) e la prepara per la classificazione
-    #
-    # img_path: percorso dove si trova l'immagine
-    # img_resize, img_crop: sono valori specifici per ogni modello 
-    #                       e servono per adattare l'immagine all'input del classificatore
-    # grayScale: se 'True', applica alle immagini il filtro GrayScale
     def prepare_image(self, img_path: str, img_resize: int, img_crop: int, grayScale=False) -> torch.tensor:
+        """Apre l'immagine passata e la prepara per la classificazione
+
+            Parameters:
+                img_path (str)              : percorso dove si trova l'immagine
+                img_resize, img_crop (int)  : sono valori specifici per ogni modello e servono per adattare l'immagine all'input del classificatore
+                grayScale (bool)            : se 'True', applica alle immagini il filtro GrayScale
+            
+            Return:
+                torch.tensor: ritorna un tensore pronto per essere classificato
+        """
+
         img = Image.open(img_path)                  # apre l'immagine
                                                     
         # converte l'immagine in GrayScale quando scelto
@@ -53,14 +66,19 @@ class ProtoModel:
 
         return input_batch
 
-
-    # classifica l'immagine dato un qualunque modello
-    # Ritorna una lista contenente 5 dizioniri (TOP 5) del tipo:
-    #   {'class': 'classe predetta', 'probability': 0.23341231}
-    #
-    # model: modello per classificare l'immagine
-    # image: tensore pronto per essere classificato
     def predict_proto(self, model, image: torch.tensor) -> list:
+        """Classifica l'immagine dato un qualunque modello
+    
+            Parameters:
+                model (ProtoModel)  : modello per classificare l'immagine
+                image (torch.tesnor): tensore pronto per essere classificato
+    
+            Return:
+                list[dict{'class': str, 'probability': double}]:
+                    Ritorna una lista contenente 5 dizioniri (TOP 5) del tipo:
+                        {'class': 'classe predetta', 'probability': 0.23341231}
+        """
+
         out = model(image) # classifica l'immagine
 
         # prende i primi 5 risultati con relative precisioni
@@ -76,14 +94,16 @@ class ProtoModel:
 
         return result
 
-    # testa il modello con tutte le immagini del dataset passatogli.
-    # scrive un file CSV con i risultati del test.
-    #
-    # name: nome del modello che sara' il nome del file csv e verra' utilizzato per alcune stampe
-    # dataset_path: percorso del dataset utilizzato per il test
-    # predict_function: funzione utilizzata per la predizione della singola immagine
-    # grayScale: se 'True', applica alle immagini il filtro GrayScale
     def proto_test(self, name: str, dataset_path: str, predict_function, grayScale=False):
+        """Testa il modello con tutte le immagini del dataset passatogli e scrive un file CSV con i risultati del test.
+            
+            Parameters:
+                name (str)                  : nome del modello che sara' il nome del file csv e verra' utilizzato per alcune stampe
+                dataset_path (str)          : percorso del dataset utilizzato per il test
+                predict_function (function) : funzione utilizzata per la predizione della singola immagine
+                grayScale (bool)            : se 'True', applica alle immagini il filtro GrayScale
+        """
+
         all_classes = get_all_dirs(dataset_path)    # prende tutte le cartelle (classi) del dataset
         predictions = []                            # lista per salvare tutte le predizioni
 
