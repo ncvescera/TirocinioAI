@@ -1,7 +1,11 @@
 from os import listdir, mkdir
 from shutil import copyfile
+import argparse
 
-dataset_path = './originali'
+
+dataset_path = ''    # path della cartella contenente il dataset da adattare
+dest_folder = ''     # nome della cartella che contiene il nuovo dataset
+
 
 def imgs_and_numbers():
     """Associa ad ogni immagine il suo numero progressivo
@@ -18,6 +22,7 @@ def imgs_and_numbers():
         numbered_imgs.append({'img': img, 'number': img_number})
 
     return numbered_imgs
+
 
 def number_to_badclass(imgs):
     """Associa l'immagine (identificata con un numero progressivo) alla relativa classe in formato numerico (brutto)
@@ -39,6 +44,7 @@ def number_to_badclass(imgs):
 
     return imgs
 
+
 def bad_to_godd_assoc():
     """Associa ogni numero di classe alla relativa forma ILSVRC
 
@@ -58,6 +64,7 @@ def bad_to_godd_assoc():
 
     return class_assoc
 
+
 def adapt_dataset(imgs, assoc):
     """Aggiunge alla singola immagine la sua giusta classe (ILSVRC) facendo il mapping tra ILSVRC e l'altro formato
 
@@ -74,25 +81,24 @@ def adapt_dataset(imgs, assoc):
 
     return imgs
 
+
 def make_dataset(imgs):
     """Crea il dataset spostando ogni immagine in una cartella con il nome della classe che rappresenta
 
         Parameters:
             imgs (list[dict{img, number, class}]): lista di dizionari che rappresentano le immagini 
     """
-    
-    dest_foledr = './ALine'     # nome della cartella che contiene il nuovo dataset
-    
+   
     # crea la nuova cartella col dataset
     # se esiste gia' continua 
     try:
-        mkdir(dest_foledr)
+        mkdir(dest_folder)
     except OSError as error:
         print(f'La cartella esiste gia ({error})')
     
     for img in imgs:
         # crea la cartella della relativa classe
-        cls_folder = f'{dest_foledr}/{img["class"]}'
+        cls_folder = f'{dest_folder}/{img["class"]}'
         try:
             mkdir(cls_folder)
         except OSError as error:
@@ -104,15 +110,46 @@ def make_dataset(imgs):
         
         copyfile(src, dst)
 
+
+def main(args):
+    # controllo presenza di Input e Output
+    if args.input is None or args.output is None:
+        print('Input o Output non settati.')
+        return
+
+    # modifica delle 2 variabili globali
+    global dataset_path
+    dataset_path = args.input[:-1] if args.input[-1] == '/' else args.input     # elimina l'ultimo / se presente nel path
+
+    global dest_folder
+    dest_folder = args.output[:-1] if args.output[-1] == '/' else args.output   # elimina l'ultimo / se presente nel path
+
+    if args.diego:
+        pass
+    else:
+        imgs = imgs_and_numbers()
+        imgs = number_to_badclass(imgs)
+
+        assoc = bad_to_godd_assoc()
+        
+        res = adapt_dataset(imgs, assoc)
+
+        make_dataset(res)
+
+
 if __name__ == '__main__':
-    
-    imgs = imgs_and_numbers()
-    imgs = number_to_badclass(imgs)
+    # creazione del parser
+    parser = argparse.ArgumentParser(description="Script per testare alcuni modelli di Image Classification di Keras")
 
-    assoc = bad_to_godd_assoc()
-    
-    res = adapt_dataset(imgs, assoc)
+    # definizione degli argomenti che accetta lo script
+    parser.add_argument("-i", "--input", help="Path della cartella dove e' contenuto il dataset da adattare", type=str)
+    parser.add_argument("-o", "--output", help="Path della cartella dove verra' creato il nuovo dataset", type=str)
+    parser.add_argument("-d", "--diego", help="Applica dei filtri alle immagini prima di creare il nuovo dataset", action="store_true")
 
-    make_dataset(res)
+    # crea gli argomenti da passare alla funzione main
+    args = parser.parse_args()
+
+    main(args)
+    
     
    
