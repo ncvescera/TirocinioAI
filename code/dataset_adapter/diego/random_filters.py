@@ -1,8 +1,7 @@
-from filters import perpetua, stinson, rise, hudson, slumber
+from .filters import perpetua, stinson, rise, hudson, slumber
 import numpy as np
 from os import listdir
 from PIL import Image
-
 
 
 '''
@@ -31,23 +30,26 @@ def random_filters(image, n_filters):
         a = np.random.uniform(l,  h)
         # genera il valore random per intensity
         s = np.random.uniform(0.7, 1.0)
-        print(f.__name__, s, a)
+        # print(f.__name__, s, a)
         img = f(img, s, a)
     return img
 
 
-# numero dei filtri da applicare
-n_filters = 5
+def apply_random_filters(seed: int, number_f=5):
+    np.random.seed(seed)    # importa il seed random per ripetibilita' del test
 
-files = listdir("./Images/")
-for img_name in files:
-    image = Image.open("./Images/" + img_name)
-    print(img_name)
+    # numero dei filtri da applicare
+    n_filters = number_f
 
-    # se l'immagine è in scala di grigi la converte in RGB
-    if image.mode == "L":
-        image = image.convert("RGB")
+    files = listdir("./Images/")
+    for img_name in files:
+        image = Image.open("./Images/" + img_name)
+        print(img_name)
 
-    filt = random_filters(image, n_filters)
-    filt.save("./Filtered/" + img_name)
-    print("\n")
+        # se l'immagine è in scala di grigi la converte in RGB
+        if image.mode == "L":
+            image = image.convert("RGB")
+
+        filt = random_filters(image, n_filters)
+        filt.save("./Filtered/" + img_name)
+        # print("\n")

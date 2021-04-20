@@ -1,6 +1,6 @@
 from PIL import Image, ImageEnhance, ImageChops
 import numpy as np
-from utilities import *
+from .utilities import *
 
 ''' file che contiene le funzioni che applicano i filtri '''
 

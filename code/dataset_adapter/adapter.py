@@ -1,10 +1,24 @@
 from os import listdir, mkdir
 from shutil import copyfile
+from distutils.dir_util import copy_tree
 import argparse
+import diego
 
 
 dataset_path = ''    # path della cartella contenente il dataset da adattare
 dest_folder = ''     # nome della cartella che contiene il nuovo dataset
+seeds = [            # seeds per rendere ripetibili i test
+    69,     # il numero che ti resta nella testa
+    666,    # the number of the beast
+    777,    # the number of F.C.
+    911,    # Nine Eleven Tower Divers
+    119,    # Revers 911
+    420,    # WeedTime
+    1308,   # Anno Domini Unipg
+    7,      # il numero massimo di ogni cosa
+    23,     # il numero bello :3
+    9       # La fine (kill -9 1)
+]
 
 
 def imgs_and_numbers():
@@ -13,6 +27,7 @@ def imgs_and_numbers():
         Return:
             numbered_imgs: lista di dizionari che rappresentano le immagini
     """
+
     immagini = listdir(dataset_path)
     numbered_imgs = []
 
@@ -33,6 +48,7 @@ def number_to_badclass(imgs):
         Return:
             imgs: lista di dizionari che rappresentano le immagini con in piu' il campo 'class'
     """
+
     with open('ILSVRC2014_clsloc_validation_ground_truth.txt', 'r') as f:
         index_to_badclass = []
         for line in f:
@@ -51,6 +67,7 @@ def bad_to_godd_assoc():
         Return:
             dict: associazione tra numero di classe e forma ILSVRC
     """
+
     class_assoc = {}
     with open('map_clsloc.txt', 'r') as f:
         for line in f:
@@ -111,6 +128,20 @@ def make_dataset(imgs):
         copyfile(src, dst)
 
 
+def start_adapting():
+    """Avvia la procedura di adattamento del dataset
+    """
+
+    imgs = imgs_and_numbers()
+    imgs = number_to_badclass(imgs)
+
+    assoc = bad_to_godd_assoc()
+    
+    res = adapt_dataset(imgs, assoc)
+
+    make_dataset(res)
+
+
 def main(args):
     # controllo presenza di Input e Output
     if args.input is None or args.output is None:
@@ -125,16 +156,37 @@ def main(args):
     dest_folder = args.output[:-1] if args.output[-1] == '/' else args.output   # elimina l'ultimo / se presente nel path
 
     if args.diego:
-        pass
-    else:
-        imgs = imgs_and_numbers()
-        imgs = number_to_badclass(imgs)
-
-        assoc = bad_to_godd_assoc()
+        # creazione cartella Images per input di Diego
+        try:
+            mkdir('./Images')
+        except OSError as error:
+            print(f'La cartella esiste gia ({error})')
         
-        res = adapt_dataset(imgs, assoc)
+        # creazione cartella Filtered per output di Diego
+        try:
+            mkdir('./Filtered')
+        except OSError as error:
+            print(f'La cartella esiste gia ({error})')
 
-        make_dataset(res)
+        # copia del dataset da adattare nella cartella Images per essere filtrate
+        copy_tree(dataset_path, './Images')
+        
+        # modifica dei path di input
+        dataset_path = './Filtered'
+        initial_dest_folder = dest_folder   # utilizzata per dare il nome alla cartella finale
+
+        for seed in seeds:
+            print(f"**** SEED {seed} ****")
+            # modifica dei path di input in funzione del seed
+            dest_folder = f'{initial_dest_folder}_{seed}'
+
+            diego.apply_random_filters(seed)
+            start_adapting()
+
+            print()
+
+    else:
+        start_adapting()
 
 
 if __name__ == '__main__':
