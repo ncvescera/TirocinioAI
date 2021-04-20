@@ -143,11 +143,6 @@ def start_adapting():
 
 
 def main(args):
-    # controllo presenza di Input e Output
-    if args.input is None or args.output is None:
-        print('Input o Output non settati.')
-        return
-
     # modifica delle 2 variabili globali
     global dataset_path
     dataset_path = args.input[:-1] if args.input[-1] == '/' else args.input     # elimina l'ultimo / se presente nel path
@@ -194,8 +189,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Script per testare alcuni modelli di Image Classification di Keras")
 
     # definizione degli argomenti che accetta lo script
-    parser.add_argument("-i", "--input", help="Path della cartella dove e' contenuto il dataset da adattare", type=str)
-    parser.add_argument("-o", "--output", help="Path della cartella dove verra' creato il nuovo dataset", type=str)
+    parser.add_argument("-i", "--input", help="Path della cartella dove e' contenuto il dataset da adattare", type=str, required=True)
+    parser.add_argument("-o", "--output", help="Path della cartella dove verra' creato il nuovo dataset", type=str, required=True)
     parser.add_argument("-d", "--diego", help="Applica dei filtri alle immagini prima di creare il nuovo dataset", action="store_true")
 
     # crea gli argomenti da passare alla funzione main
