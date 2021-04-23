@@ -3,22 +3,26 @@ from threading import Thread
 from models import get_models
 import argparse
 
-
-dataset_dir = '../dataset/imagenet-mini/val'
-aline = '../dataset/ALine'
+dataset_dir = ''
 MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
 
 
-def menu() -> dict:
-    """Permette all'utente di scegliere quali modelli testare (tra quelli disponibili)
+def menu(all=False):
+    """Chiede all'utente di scegliere quali modelli testare (tra quelli disponibili).
+
+        Parameters:
+            all=False (bool): se 'True' ritorna tutti i modelli senza stampare nulla a video.
 
         Return:
-            dict{str: ProtoModel}: modelli scelti dall'utente che andranno testati
+            list[ProtoModel]: lista contenente i modelli scelti dall'utente da testare
     """
 
     # prende tutti i modelli disponibili
     modelli = get_models()
     modelli = list(modelli.values())
+
+    if all:
+        return modelli
 
     print("Questi sono i modelli disponibili: ")
     print()
@@ -45,43 +49,74 @@ def menu() -> dict:
     return result
 
 
-
-def worker(model, gscale=False):
-    """Testa il modello e scrive i risultati in un file csv
-
+def from_file(file_name: str, modelli, gscale):
+    """Testa i modelli scelti con tutti i dataset presenti nel file.
+        Per ogni dataset crea una cartella dove sposta tutti i dati (file .csv creati dalla fase di testing)
+        ottenuti dal testing.
+        Il file deve contenere una riga per path, tipo:
+            
+            ./path/to/dataset1
+            ../path/to/dataset2
+            /home/path/to/dataset3/
+        
         Parameters:
-            model (ProtoModel)  : modello che deve essere testato
-            gscale (bool)       : se 'True' avvia il testing con le immagini convertite in GrayScale
+            file_name (str)             : nome del file che contiene tutti i path dei dataset da utilizzare
+            modelli (list[ProtoModel])  : lista con tutti i modelli da testare
+            gscale (bool)               : se 'True' applica il filtro GrayScale alle immagini
     """
 
-    model.test(dataset_dir, grayScale=gscale)
+    # legge tutti i dataset dal file e li mette in una lista
+    datasets = []
+    with open(file_name, 'r') as f:
+        for line in f:
+            to_append = line.strip('\n')
+            to_append = to_append[:-1] if to_append[-1] == '/' else to_append
+            
+            datasets.append(to_append)
+
+    # TODO: questa parte va migliorata per renderla indipendente dal OS ed evitare l'uso specifico di comandi shell
+    import os
+    global dataset_dir
+    
+    for dataset in datasets:
+        dataset_dir = dataset
+
+        # avvia il testing multithreading o single threading
+        threading_handler(modelli, gscale)
+
+        new_dir = dataset_dir.split('/')[-1]    # prende il nome da dare alla nuova cartella
+
+        # TODO: evitare comandi shell in questo modo !!
+        os.system(f'mkdir {new_dir}')            # crea la cartella del relativo dataset
+        os.system(f'mv *.csv {new_dir}')        # sposta tutti i csv dentro la cartella
 
 
-def main(args):
-    # controlla se il dataset scelto e' giusto
-    if args.dataset is not None:
-        if args.dataset == 'ALine':
-            global dataset_dir
-            dataset_dir = aline
-        
-        elif args.dataset == 'ImageNet':
-            pass
-        
-        else:   # se la scelta e' sbagliata interrompe il programma
-            print('Dataset inesistente, controlla meglio !')
-            return
+def threading_handler(modelli, gscale, noThread=False):
+    """Funzione che gestisce il multithreading
 
-    gscale = args.grayscale         # variabile per attivare filtro GrayScale     
-    modelli = menu()                # prende tutti i modelli disponibili
+        Parameters:
+            modelli (list[ProtoModel])  : lista con tutti i modelli da testare
+            gscale (bool)               : se 'True' applica il filtro GrayScale alle immagini
+            noThread=False (bool)       : se 'True' disabilita il MultiThreading
+    """
 
-    # avvia il test in modalita' single thread
-    if args.nothreads:
+    def worker(model, gscale=False):
+        """Testa un dato Modello.
+
+            Parameters:
+                model (ProtoModel)  : modello da testare
+                gscale (bool)       : se 'True' applica il filtro GrayScale alle immagini
+        """
+
+        model.test(dataset_dir, grayScale=gscale)
+
+    # esegue il testing in singleThread
+    if noThread:
         for model in modelli:
-            worker(model, gscale)
-
+                worker(model, gscale)
+        
         return
 
-    # versione multithreading sensata
     ts = []   # lista contenente i thread attivi
     i = 0       # variabile per contare quanti thread sono stati creati
     for model in modelli:
@@ -106,6 +141,23 @@ def main(args):
         t.join()
 
 
+def main(args):
+    # setta il path del dataset
+    global dataset_dir
+    dataset_dir = args.input[:-1] if args.input[-1] == '/' else args.input
+
+    #TODO: implementare l'argomento -d
+
+    gscale = args.grayscale         # variabile per attivare filtro GrayScale     
+    modelli = menu(all=args.all)    # prende tutti i modelli disponibili
+
+    if args.file:
+        from_file(dataset_dir, modelli, gscale)
+    else: 
+        threading_handler(modelli, gscale, noThread=args.nothreads)
+    
+
+
 if __name__ == '__main__':
     # creazione del parser
     parser = argparse.ArgumentParser(description="Script per testare alcuni modelli di Image Classification di PyTorch")
@@ -114,7 +166,9 @@ if __name__ == '__main__':
     parser.add_argument("-g", "--grayscale", help="Applica a tutte le immaigni il filtro GrayScale.", action="store_true")
     parser.add_argument("-d", "--download", help="Scarica i modelli e termina lo script.", action="store_true")
     parser.add_argument("--nothreads", help="Esegue il testing in meniera sequenziale senza multithreading", action="store_true")
-    parser.add_argument("--dataset", type=str, help="Seleziona il dataset con cui testare i modelli.\nScelte: ALine | ImageNet")
+    parser.add_argument("-i", "--input", type=str, help="Path del dataset (o del file) con cui testare i modelli", required=True)
+    parser.add_argument("-a", "--all", help="Testa tutti i modelli disponibili senza stampare il menu di scelta iniziale", action="store_true")
+    parser.add_argument("-f", "--file", help="Indica che il path dell'argomento input e' un file e testera' i modelli con ogni path presente nel file.", action="store_true")
 
     # crea gli argomenti da passare alla funzione main
     args = parser.parse_args()
