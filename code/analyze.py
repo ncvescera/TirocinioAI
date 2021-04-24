@@ -184,6 +184,56 @@ def strong_imgs(dirs: list):
     find_strongest_imgs(strong_imgs)
 
 
+def plot_chart(indexes: list, data_top1: list, data_top5: list):
+    """Funzione che si occupa della stampa del grafico
+        Stampa un Istogramma con X il nome del modello e con Y i valori di Accuracy.
+        Stampa 2 Istogrammi, uno per TOP1 e l'altro per TOP5
+
+        Parameters:
+            indexes (list)  : i valori che devono essere stampati come X.
+                                In questo caso saranno sempre stringhe che rappresentano il nome del modello
+            data_top1 (list): i valori dei vari modelli di accuracy TOP1
+            data_top5 (list): i valori dei vari modelli di accuracy TOP5
+    """
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # numero delle etichette delle X
+    n_groups = len(indexes)
+
+    # crea il  plot
+    fig, ax = plt.subplots()
+    index = np.arange(n_groups)
+    bar_width = 0.35
+    opacity = 0.8
+
+    # rettangoli dei TOP1
+    rects1 = plt.bar(index, data_top1, bar_width,
+        alpha=opacity,
+        color='b',
+        label='Top1'
+    )
+
+    # rettangoli TOP5
+    rects2 = plt.bar(index + bar_width, data_top5, bar_width,
+        alpha=opacity,
+        color='g',
+        label='Top5'
+    )
+
+    # aggiunta della legende e di altre scritte al grafico
+    plt.xlabel('Model Name')
+    plt.ylabel('Accuracy')
+    plt.title('Models Scores')
+    plt.xticks(index + bar_width, tuple(indexes))
+    plt.legend()
+    
+    # stampa il grafico
+    plt.tight_layout()
+    plt.show()
+
+
 def main(args):
     global no_save
     no_save = args.nosave
@@ -193,6 +243,10 @@ def main(args):
         strong_imgs(files)
     
     else:
+        # liste per il grafico
+        indexes = []    # conterra' l'asse delle X (nomi dei file)
+        data_top1 = []  # risultati TOP1 di ogni modello
+        data_top5 = []  # risultati TOP5 di ogni modello
         for file in files:
             data_dict = get_data(file)
             
@@ -224,6 +278,14 @@ def main(args):
             print("TOP 5: ", top5/totali)
             print()
 
+            indexes.append(file.split('/')[-1][:-4])    # modifica il nome per aggiungerlo alle X del grafico
+                                                        # prende solo il nome del file e toglie l'estensione
+            data_top1.append(top1/totali)               # aggiunge la percentuale TOP1
+            data_top5.append(top5/totali)               # aggiunge la percentuale TOP5
+
+        if args.plot:
+            plot_chart(indexes, data_top1, data_top5)
+
 
 if __name__ == "__main__":
      # creazione del parser
@@ -233,6 +295,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--input", type=str, help="Path dei file(s) da elaborare", nargs='+', default=[], required=True)
     parser.add_argument("--strong", help="Avvia la procedura per controllare quali immagini sono 'forti'. Devono essere inseriti 2 path di due cartelle contenenti i files. Il primo path deve essere quello NON FILTRATO.", action="store_true")
     parser.add_argument("--nosave", help="Evita di salvare i risultati del test su file. Solo le immagini Fortissime vengono salvate !!", action="store_true")
+    parser.add_argument("--plot", help="Stampa il grafico dell'accuracy dei modelli", action="store_true")
 
     # crea gli argomenti da passare alla funzione main
     args = parser.parse_args()
