@@ -20,7 +20,7 @@ class ResNet50(ProtoModel):
         self.model.eval()    # disabilita la fase di training e permette di testare il modello
 
     def predict(self, image: str, grayScale=False) -> list:
-         """Classifica l'immagine passata
+        """Classifica l'immagine passata
             
             Parameters:
                 image (str)     : path dell'immagine da classificare
