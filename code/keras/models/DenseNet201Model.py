@@ -3,26 +3,37 @@ from tensorflow.keras.applications.densenet import preprocess_input, decode_pred
 from .ProtoModel import ProtoModel
 
 
-# Classe che implementa le funzioni del modello DenseNet201
 class DenseNet201Model(ProtoModel):
+    """Classe che implementa le funzioni del modello DenseNet201
+    """
+
     def __init__(self):
         super().__init__()
 
         self.model = None
         self.name = 'DenseNet201'
     
-    # lateinit del modello per evitare un avvio mooolto lento
     def _init_model(self):
+        """Lateinit del modello per evitare un avvio mooolto lento
+        """
+
         self.model = DenseNet201(weights='imagenet')
 
-    # classifica una lista di immagini date
-    # Ritorna una lista contenente dizionari del tipo:
-    #   {'class': 'classe predetta', 'probability': 0.2348172}
-    # Ogni elemento della lista è una predizione: contiene i primi 5 risultati (TOP 5)
-    # Ci saranno tanti elementi nella lista finali quante immagini
-    #
-    # gscale: se 'True' le immagini verranno convertite in GrayScale
     def predict(self, imgs: list, gscale=False) -> list:
+        """Classifica una lista di immagini date
+    
+            Parameters:
+                imgs (list)     : lista di immagini da classificare
+                gscale (bool)   : se 'True', applica il filtro GrayScale alle immagini
+
+            Return:
+                list[dict{'class': str, 'probability': double}]: 
+                    ritorna una lista contenente dizionari del tipo:
+                        {'class': 'classe predetta', 'probability': 0.2348172}
+                    Ogni elemento della lista è una predizione: contiene i primi 5 risultati (TOP 5)
+                    Ci saranno tanti elementi nella lista finali quante immagini
+        """
+
         target_size = (224, 224)    # indica la dimenzione con cui deve essere ridimenzionata l'immagine
         
         # controllo per il lateinit del modello
@@ -33,7 +44,13 @@ class DenseNet201Model(ProtoModel):
         
         return result 
     
-    # testa il modello con tutte le immagini del dataset passatogli
     def test(self, dataset_path: str, gscale=False):
+        """Testa il modello con tutte le immagini del dataset passatogli
+
+            Parameters:
+                dataset_path (str): il path della cartella contenente il dataset
+                gscale (bool): se 'True' alle immagini viene applicato il filtro GrayScale
+        """
+
         self.proto_test(dataset_path, self.name, self.predict, gscale)
        

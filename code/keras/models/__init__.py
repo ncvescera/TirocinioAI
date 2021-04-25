@@ -9,8 +9,15 @@ from .DenseNet201Model import DenseNet201Model
 from .EfficientNetB7Model import EfficientNetB7Model
 
 
-# ritorna un dizionario con tutti i modelli disponibili
 def get_models() -> dict:
+    """Ritorna un dizionario con tutti i modelli disponibili
+    
+        Return:
+            dict{'NomeModello': ProtoModel}: il dizionario contenente tutti i modelli disponibili.
+                                Come key ha il nome del modello e come valore un oggetto Modello
+                                (figlio della classe ProtoModel)
+    """
+    
     models = {
         'ResNet50': ResNet50Model(),
         'MobileNet': MobileNetModel(),

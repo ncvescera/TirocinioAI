@@ -11,18 +11,24 @@ class ProtoModel:
     def __init__(self):
         pass
     
-    # classifica una lista di immagini date
-    # Ritorna una lista contenente dizionari del tipo:
-    #   {'class': 'classe predetta', 'probability': 0.2348172}
-    # Ogni elemento della lista è una predizione: contiene i primi 5 risultati (TOP 5)
-    # Ci saranno tanti elementi nella lista finali quante immagini
-    #
-    # tsize: è una Tupla e rappresenta la dimenzione con cui deve essere ridimenzionata l'immagine
-    # model: il modello con cui classificare le immagini
-    # preprocess_input: funzione per il preprocessing dell'immagine da passare al modello
-    # decode_predictions: funzione per interpretare il risultato della classificazione
-    # gscale: se 'True' le immagini verranno convertite in GrayScale
     def proto_predict(self, imgs: list, tsize: tuple, model, preprocess_input, decode_predictions, gscale=False) -> list:
+        """Classifica una lista di immagini date
+
+            Parameters:
+                tsize (tuple(int, int))         : è una Tupla e rappresenta la dimensione con cui deve essere ridimenzionata l'immagine
+                model (PortoModel)              : il modello con cui classificare le immagini
+                preprocess_input (Callable)     : funzione per il preprocessing dell'immagine da passare al modello
+                decode_predictions (Callable)   : funzione per interpretare il risultato della classificazione
+                gscale (bool)                   : se 'True' le immagini verranno convertite in GrayScale
+
+            Return:
+                list[dict{'class': str, 'probability': double}]: 
+                    Ritorna una lista contenente dizionari del tipo:
+                        {'class': 'classe predetta', 'probability': 0.2348172}
+                    Ogni elemento della lista è una predizione: contiene i primi 5 risultati (TOP 5)
+                    Ci saranno tanti elementi nella lista finali quante immagini
+        """
+
         results = []
         for img in imgs:
             img_path = img
@@ -57,14 +63,15 @@ class ProtoModel:
         
         return results
 
-    # testa il modello con tutte le immagini del dataset passatogli.
-    # alla fine genera un file contenente tutti i risultati delle classificazioni
-    #
-    # dataset_path: path della cartella contenente il dataset
-    # name: nome del modello (servirà come nome del file finale)
-    # predict_function: funzione utilizzata per la classificazione delle immagini
-    # gscale: indica se va applicato il filtro GrayScale
     def proto_test(self, dataset_path: str, name: str, predict_function, gscale=False):
+        """Testa il modello con tutte le immagini del dataset passatogli e genera un file contenente tutti i risultati delle classificazioni.
+
+            Parameters:
+                dataset_path (str)          : path della cartella contenente il dataset
+                name (str)                  : nome del modello (servirà come nome del file finale)
+                predict_function (Callable) : funzione utilizzata per la classificazione delle immagini
+                gscale (bool)               : indica se va applicato il filtro GrayScale
+        """
         all_classes = get_all_dirs(dataset_path)    # prende tutte le cartelle (classi) del dataset
 
         # classifica tutti i file (divisi per classe) del dataset
