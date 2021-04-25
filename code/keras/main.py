@@ -3,7 +3,6 @@ from threading import Thread
 import argparse
 
 
-# dataset_dir = '../dataset/imagenet-mini/val'
 dataset_dir = ''
 MAX_THREAD_NUMBER = 3       # numero massi di thread che possono essere eseguiti contemporaneamente
 
@@ -169,7 +168,6 @@ def main(args):
 
     if args.file:
         from_file(dataset_dir, modelli, gscale)
-    
     else: 
         threading_handler(modelli, gscale, noThread=args.nothreads)
 
@@ -184,7 +182,6 @@ if __name__ == "__main__":
     parser.add_argument("--nothreads", help="Esegue il testing in meniera sequenziale senza multithreading", action="store_true")
     parser.add_argument("-i", "--input", type=str, help="Path del dataset (o del file) con cui testare i modelli", required=True)
     parser.add_argument("-a", "--all", help="Testa tutti i modelli disponibili senza stampare il menu di scelta iniziale", action="store_true")
-
     parser.add_argument("-f", "--file", help="Indica che il path dell'argomento input e' un file e testera' i modelli con ogni path presente nel file.", action="store_true")
 
     # crea gli argomenti da passare alla funzione main
