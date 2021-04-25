@@ -1,6 +1,10 @@
 from os import listdir
 
 
+dataset_dir = ''    # variabile globale per ricordarsi il path del dataset
+csv_header = 'image;probability;guess_class;real_class;other_predictions'
+
+
 def to_dict(arr: list):
     """Trasforma il risultato della classificazione in un array
         di dizionari pronto per essere utilizzato dagli altri script
@@ -23,9 +27,6 @@ def to_dict(arr: list):
         result.append(tmp_dict)
 
     return result
-
-
-dataset_dir = ''    # variabile globale per ricordarsi il path del dataset
 
 
 def get_all_dirs(path: str) -> list:
@@ -66,9 +67,6 @@ def get_all_dirs_files(folder: str) -> list:
         res.append(f'{dataset_dir}/{folder}/{elem}')
 
     return res
-
-
-csv_header = 'image;probability;guess_class;real_class;other_predictions'
 
 
 class PredictionData:
