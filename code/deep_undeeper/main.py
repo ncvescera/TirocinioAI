@@ -2,10 +2,12 @@ import argparse
 import glob
 import numpy as np
 import cv2
-from os import walk, path
+import gc
+from os import walk, path, environ
+
+environ['TF_CPP_MIN_LOG_LEVEL'] = '3'   # disabilita i log di tensorflow
 
 # Import di KERAS e roba per Modello
-#TODO: capire se puo' essere messo nel main per aumentare la velocita' di avvio
 import tensorflow as tf
 from tensorflow import keras
 from keras.models import Model
@@ -14,7 +16,7 @@ from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 ## ------------------------------- ##
 
-def create_model() -> keras.Model:
+def create_model():
     """Prepara il modello che analizza le immagini
 
         Return:
@@ -93,21 +95,29 @@ def get_all_image_from_dir(dir_path: str) -> list:
     return imgs
 
 
+def save_to_csv(dataset_path:str, pulite:int, distorte:int, errori:np.array):
+    """Salva in csv i dati dell'errore del dataset.
+
+        Parameters:
+            dataset_path (str): path del dataset che e' stato testato
+            pulite (int): numero di immagini considerate pulite
+            distorte (int): numero di immagini considerate distorte
+            errori (np.array): array contenente tutti gli errori delle singole immgini
+    """
+
+    csv_header = "name;tot_imgs;pulite;distorte;errore_avg"
+
+    tot_imgs = pulite + distorte        # totale immagini analizzate
+    name = dataset_path.split('/')[-1]  # prende il nome dell'ultima cartella nel path passato
+
+    with open(f'encod_{name}.csv', 'w') as f:
+        f.write(csv_header)
+        f.write('\n')
+        f.write(f'{name};{tot_imgs};{pulite};{distorte};{np.mean(errori)}\n')
+
+
 def main(args):
-    # TODO: decidiere se far scegliere anche il path del modello
-
-    # prende i vari input
-    dataset_path :str = args.input[:-1] if args.input[-1] == '/' else args.input
     model_path   :str = 'gaussian_blur_uguali_rivolta2.model'
-
-    # --- Prepara le immagini per la rete --- #
-    print('Preparo le immagini ...')
-    
-    imgs_nofilter :list = get_all_image_from_dir(dataset_path)       # prende tutti i file all'interno della cartella
-    imgs_nofilter_ready :np.array = prepare_dataset(imgs_nofilter)   # scala le immagini alla giusta dimensione   
-
-    print('... OK')
-    # --- ------------------------------ --- #
 
     # --- Crea il Modello della Rete e lo carica da file --- #
     print('Carico il modello ...')
@@ -118,36 +128,52 @@ def main(args):
     print('... OK')
     # --- -------------------------------------------- --- #
 
-    # -- Utilizza il Modello e analizza le immagini --- #
-    print('Utilizzo il modello ...')
+    for dataset in args.input:
+        # prepara il nome del dataset, eventualmente toglie l'ultimo '/'
+        dataset_path :str = dataset[:-1] if dataset[-1] == '/' else dataset
+        
+        print(f'Eseguo il test per:\t{dataset_path}')
 
-    input_imgs :np.array = imgs_nofilter_ready[:100]                    # le prime 100 immagini. Utilizzato temporaneamente per testing
-    risultato :np.array  = gaussian_auto_encoder.predict(input_imgs)    # il modello controlla tutte le immagini
+        # --- Prepara le immagini per la rete --- #
+        print('Preparo le immagini ...')
+        
+        imgs_nofilter :list = get_all_image_from_dir(dataset_path)       # prende tutti i file all'interno della cartella
+        imgs_nofilter_ready :np.array = prepare_dataset(imgs_nofilter)   # scala le immagini alla giusta dimensione   
 
-    # calcola l'errore (??) per ogni immagine
-    conta_pulita = 0        # numero di immagini pulite (considerate appartenenti al dataset (??))
-    conta_distorta = 0      # numero di immagini distorete (considerate NON appartenenti al dataset (??))
-    treshold = 0.87         # treshold di attivazione per considerare un'immagine pulita (> treshold) o distorata (<= treshold)
-    errori = np.array([])   # utilizzo un numpy.arry per effettuare i calcoli piu' facilmente alla fine
-    
-    for i in range(len(input_imgs)):
-        errore = (np.square(input_imgs[i] - risultato[i])).mean()   # calcola l'errore (??)
-        errore = errore * 100
-        errori = np.append(errori, errore)
+        print('... OK')
+        # --- ------------------------------ --- #
 
-        # conta quante sono le immagini considerate 'distorte' e quelle 'pulite'
-        if errore > treshold :
-            conta_distorta += 1
-        else:
-            conta_pulita += 1
+        # -- Utilizza il Modello e analizza le immagini --- #
+        print('Utilizzo il modello ...')
 
-    print(f"immagini pulite = {conta_pulita} ({conta_pulita/len(input_imgs)*100}%)")
-    print(f"immagini distorte =  {conta_distorta} ({conta_distorta/len(input_imgs)*100}%)")
-    print(f"media errore dataset distorto = {np.mean(errori)}")
+        input_imgs :np.array    = imgs_nofilter_ready
+        input_tensor :tf.Tensor = tf.convert_to_tensor(input_imgs, dtype=tf.float32)    #  bisogna convertire il numpy.arry in tensore per evitare memory leak !!
+        risultato  :np.array    = gaussian_auto_encoder.predict(input_tensor)           # il modello controlla tutte le immagini
 
-    # TODO: implementare un modo per salvare in csv i dati di ogni test
-    # TODO: effettuare il test per ogni cartella data in input
-    
+        # calcola l'errore (??) per ogni immagine
+        conta_pulita = 0        # numero di immagini pulite (considerate appartenenti al dataset (??))
+        conta_distorta = 0      # numero di immagini distorete (considerate NON appartenenti al dataset (??))
+        treshold = 0.87         # treshold di attivazione per considerare un'immagine pulita (> treshold) o distorata (<= treshold)
+        errori = np.array([])   # utilizzo un numpy.arry per effettuare i calcoli piu' facilmente alla fine
+        
+        for i in range(len(input_imgs)):
+            errore = (np.square(input_imgs[i] - risultato[i])).mean()   # calcola l'errore (??)
+            errore = errore * 100
+            errori = np.append(errori, errore)
+
+            # conta quante sono le immagini considerate 'distorte' e quelle 'pulite'
+            if errore > treshold :
+                conta_distorta += 1
+            else:
+                conta_pulita += 1
+
+        print(f"immagini pulite = {conta_pulita} ({conta_pulita/len(input_imgs)*100}%)")
+        print(f"immagini distorte =  {conta_distorta} ({conta_distorta/len(input_imgs)*100}%)")
+        print(f"media errore dataset = {np.mean(errori)}")
+
+        save_to_csv(dataset_path, conta_pulita, conta_distorta, errori)
+        _ = gc.collect()    # dovrebbe impedire di utilizzare troppa memoria durante tutto lo script (??)
+
 
 if __name__ == '__main__':
     # creazione del parser
@@ -157,6 +183,8 @@ if __name__ == '__main__':
     parser.add_argument(
         "input", 
         type=str, 
+        nargs='+',
+        default=[],
         help="Path del dataset da controllare.\
                 E' possibile passare allo script sia una cartella con tutte le immagini dentro sia una cartella formattata come un dataset per essere testato"
     )
