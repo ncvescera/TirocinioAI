@@ -128,6 +128,76 @@ def make_dataset(imgs):
         copyfile(src, dst)
 
 
+def gingham():
+    """Applica il filtro GinGham alle immagini della cartella data.
+        python -i ../destinazione/dataset -o ../cartella/dataset -g
+        
+        '../destinazione/dataset' indica la cartella che contiene tutte le immagini
+        '../cartella/dataset' indica dove verra' salvato il nuovo dataset.
+            Dentro a questa cartella verra' creata una nuova cartella con il nome 'Gam_dataset'
+            (dataset e' il nome della cartella in input)
+
+        python -i ./in.txt -o ../cartella/dataset -g
+
+        './in.txt' e' un file con dentro path di dataset. Deve avere per forza estensione .txt !!
+            Fa la stessa cosa come sopra per tutti i dataset indicati in quel file
+    """
+
+    import gimgum
+    from os import walk, path
+
+    def gingham_procedure(in_path: str):
+        global dataset_path
+        global dest_folder
+
+        dest_path = './Filtered'
+
+        # prende tutte le immagini a cui applicare i filtri
+        contenuto = walk(in_path)  # prende il contenuto di tutta la cartella e delle cartelle al suo interno
+
+        imgs = []   # tutte le immagini a cui applicare il filtro
+        for root, dirs, files in contenuto:
+            for name in files:
+                tmp_name :str = path.join(root, name)                           # prende il path del singolo file all'interno delle varie cartele
+                if tmp_name.endswith('.JPEG') or tmp_name.endswith('.PNG'):     # se e' un immagini lo aggiunge
+                    imgs.append(tmp_name)
+
+        # applica il filtro alle immagini e le salva
+        for img in imgs:
+            gimgum.apply_gingham(img, dest_path)
+
+        in_name = in_path.split('/')[-1] # prende il nome della cartella in input
+
+        # imposto le variabili di input e otput
+        dataset_path = './Filtered'
+        dest_folder += f'/Gam_{in_name}'
+
+        start_adapting()    # avvia l'adapting del dataset
+
+    # creazione cartella Filtered per output gingham
+    try:
+        mkdir('./Filtered')
+    except OSError as error:
+        print(f'La cartella esiste gia ({error})')
+
+    if dataset_path.endswith('.txt'):
+        # prende tutti i dataset da file
+        datasets = []
+        with open(dataset_path, 'r') as f:
+            for line in f:
+                datasets.append(line.strip('\n'))
+        
+        # per ogni dataset avvia la procedura gingham
+        global dest_folder
+        reset_dest_folder = dest_folder
+        for dataset in datasets:
+            gingham_procedure(dataset)
+            dest_folder = reset_dest_folder # reset della destinazione per evitare che le cartelle siano nestate
+
+    else:
+        gingham_procedure(dataset_path)
+
+
 def start_adapting():
     """Avvia la procedura di adattamento del dataset
     """
@@ -180,6 +250,9 @@ def main(args):
 
             print()
 
+    elif args.gingham:
+        gingham()
+
     else:
         start_adapting()
 
@@ -192,6 +265,13 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input", help="Path della cartella dove e' contenuto il dataset da adattare", type=str, required=True)
     parser.add_argument("-o", "--output", help="Path della cartella dove verra' creato il nuovo dataset", type=str, required=True)
     parser.add_argument("-d", "--diego", help="Applica dei filtri alle immagini prima di creare il nuovo dataset", action="store_true")
+    parser.add_argument(
+        "-g", 
+        "--gingham", 
+        help="Applica il filtro GinGham alle immagini contenute nella cartella di input. Come output va indicata la cartella dove andra' creata la nuova cartella.\
+            Puo' essere passato come input un file .txt (deve avere questa estensione per forza !!) contenente tutti i path dei dataset a cui applicare il filtro", 
+        action="store_true"
+        )
 
     # crea gli argomenti da passare alla funzione main
     args = parser.parse_args()
