@@ -153,7 +153,7 @@ def main(args):
         # calcola l'errore (??) per ogni immagine
         conta_pulita = 0        # numero di immagini pulite (considerate appartenenti al dataset (??))
         conta_distorta = 0      # numero di immagini distorete (considerate NON appartenenti al dataset (??))
-        treshold = 0.87         # treshold di attivazione per considerare un'immagine pulita (> treshold) o distorata (<= treshold)
+        treshold = 0.87         # treshold di attivazione per considerare un'immagine pulita (<= treshold) o distorata (> treshold)
         errori = np.array([])   # utilizzo un numpy.arry per effettuare i calcoli piu' facilmente alla fine
         
         for i in range(len(input_imgs)):
