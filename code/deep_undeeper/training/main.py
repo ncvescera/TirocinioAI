@@ -5,7 +5,7 @@ from tensorflow import keras
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Input, Conv2D, UpSampling2D, BatchNormalization
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
@@ -74,17 +74,37 @@ def main(args):
     EPOCHS  = args.epochs
 
     # prendo le immagini
+    # TODO: creare una nuova cartella con dentro le 1000 immagini di validazione
+    #       e decommentare la riga 80 (usare 1000 immagini dalla 30000 in poi)
     imgs = prepare_images('./ilsvrc2012Training')
+    # validation = prepare_images('./ilsvrc2012Validation')
 
     # creo il modello
     deepundeeper = create_model()
     print(deepundeeper.summary())
 
     # alleno il modello
+    # TODO: provare ad allenare il modello con le istruzioni seguenti e commentare riga 104
+    # TODO: provare ad utilizzare len(imgs) e vedere cosa succede
+    '''
+    model_filepath = './deepundeeper_checkpoint.h5' # path dove andranno salvati i checkpoint
+    
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30)                                    # Early stopping (stops training when validation doesn't improve for {patience} epochs)
+    save_best = ModelCheckpoint(model_filepath, monitor='val_loss', save_best_only=True, mode='min', verbose = 1) # Saves the best version of the model to disk
+
+    deepundeeper_history = deepundeeper.fit(
+        imgs, 
+        steps_per_epoch=10000 // BATCH,     # per renderlo indipendente dal numero di immagini provare con len(imgs)
+        epochs=EPOCHS, 
+        validation_data=validation,
+        validation_steps=1000 // BATCH,
+        callbacks=[es, save_best]
+        )
+    '''
     deepundeeper_history = deepundeeper.fit(imgs, epochs=EPOCHS)
     
     # salvo il modello
-    deepundeeper_history.save('deep_undeeper224.model')
+    deepundeeper.save('deep_undeeper224.model')
 
     # salvo il grafico
     plt.plot(deepundeeper_history.epoch, deepundeeper_history.history['loss'])
