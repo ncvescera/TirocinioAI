@@ -6,17 +6,18 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Input, Conv2D, UpSampling2D, BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, DirectoryIterator
 
 
 EPOCHS  = 200   # indica il numero di epoche da utilizzare nella fase di training
 BATCH   = 8     # indica il numero di batch da utilizzare nella fase di training
 
 
-def create_model():
-    """Prepara il modello che analizza le immagini
+def create_model() -> Model:
+    """ Prepara il modello che analizza le immagini
+        
         Return:
-            keras.Model: modello della rete
+            Model: modello della rete
     """
 
     x = Input(shape=(224, 224, 3))      # reso input shape standard
@@ -46,16 +47,26 @@ def create_model():
     return model
 
 
-def prepare_images(dataset_path: str) -> ImageDataGenerator:
+def prepare_images(dataset_path: str) -> DirectoryIterator:
+    """ Prepara le immagini da passare alla rete.
+        Tutte le immagini vengono normalizzate (pixel * (1./255)) e ridimenzionate a 224x224.
+
+        Parameters:
+            dataset_path (str): il path della cartella dove sonon contenute le immagini.
+                                La cartella deve contenere altre cartelle che rappresentano la classe delle immagini contenute.
+
+        Return:
+            DirectoryIterator: iteratore da passare alla rete con tutte le immagini preparate e pronte all'utilizzo.
+    """
     # definizione di ImageDataGenerator per caricare in modo efficiente le immagini
-    datagen = ImageDataGenerator(
+    datagen :ImageDataGenerator = ImageDataGenerator(
             data_format = "channels_last",  # serve per avere un array del tipo (sample, height, width, channels)
             rescale=1./255                  # normalizzazione (??) delle immagini
                                             # fa la stessa cosa che con CV2 [(pixel-255)/255]        
         )
 
     # carica le immagini dalla cartella del dataset
-    result = datagen.flow_from_directory(
+    result :DirectoryIterator = datagen.flow_from_directory(
             dataset_path,                       # path della cartella del dataset
             target_size=(224, 224),             # (height, width) resize che verrà fatto all'immagine
             batch_size=BATCH,                   # 16 occupano troppa memoria per la 1080
@@ -75,20 +86,21 @@ def main(args):
 
     # prendo le immagini
     # TODO: creare una nuova cartella con dentro le 1000 immagini di validazione
-    #       e decommentare la riga 80 (usare 1000 immagini dalla 30000 in poi)
-    imgs = prepare_images('./ilsvrc2012Training')
-    # validation = prepare_images('./ilsvrc2012Validation')
+    #       e decommentare la riga 91 (usare 1000 immagini dalla 30000 in poi)
+    imgs :DirectoryIterator = prepare_images('./ilsvrc2012Training')
+    # validation :DirectoryIterator = prepare_images('./ilsvrc2012Validation')
 
     # creo il modello
-    deepundeeper = create_model()
+    deepundeeper :Model = create_model()
     print(deepundeeper.summary())
 
     # alleno il modello
-    # TODO: provare ad allenare il modello con le istruzioni seguenti e commentare riga 104
+    # TODO: provare ad allenare il modello con le istruzioni seguenti e commentare riga 116
     # TODO: provare ad utilizzare len(imgs) e vedere cosa succede
     '''
     model_filepath = './deepundeeper_checkpoint.h5' # path dove andranno salvati i checkpoint
     
+    # callbacks
     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30)                                    # Early stopping (stops training when validation doesn't improve for {patience} epochs)
     save_best = ModelCheckpoint(model_filepath, monitor='val_loss', save_best_only=True, mode='min', verbose = 1) # Saves the best version of the model to disk
 
