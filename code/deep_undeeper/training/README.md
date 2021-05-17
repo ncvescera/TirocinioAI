@@ -23,3 +23,7 @@ python main.py -e 200 -b 8
 # oppure
 python main.py --epochs 200 --batch 8
 ```
+
+## Dataset
+
+Il dataset che e' stato utilizzato per l'allenamento e la valutazione del modello e' ImageNet (ILSVRC2012) [link](https://image-net.org/data/ILSVRC/2012/ILSVRC2012_img_val.tar)
