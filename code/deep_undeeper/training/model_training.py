@@ -47,7 +47,7 @@ def create_model() -> Model:
     return model
 
 
-def prepare_images(dataset_path: str) -> DirectoryIterator:
+def prepare_images(dataset_path: str, seed=None, shuffle=True) -> DirectoryIterator:
     """ Prepara le immagini da passare alla rete.
         Tutte le immagini vengono normalizzate (pixel * (1./255)) e ridimenzionate a 224x224.
 
@@ -70,7 +70,9 @@ def prepare_images(dataset_path: str) -> DirectoryIterator:
             dataset_path,                       # path della cartella del dataset
             target_size=(224, 224),             # (height, width) resize che verrà fatto all'immagine
             batch_size=BATCH,                   # 16 occupano troppa memoria per la 1080
-            class_mode='input'                  # indica il tipo dell'arry delle classi. 'input' ritorna immagini uguali a quelle di input     
+            class_mode='input',                 # indica il tipo dell'arry delle classi. 'input' ritorna immagini uguali a quelle di input     
+            seed=seed,                          # imposta il seed per rendere i test ripetibili. (di default e' None)
+            shuffle=shuffle                     # ogni volta cambia l'ordine delle immagini (le mischia)
         )
 
     return result
@@ -84,20 +86,19 @@ def main(args):
     BATCH   = args.batch
     EPOCHS  = args.epochs
 
-    # prendo le immagini
-    # TODO: creare una nuova cartella con dentro le 1000 immagini di validazione
-    #       e decommentare la riga 91 (usare 1000 immagini dalla 30000 in poi)
-    imgs :DirectoryIterator = prepare_images('./ilsvrc2012Training')
-    # validation :DirectoryIterator = prepare_images('./ilsvrc2012Validation')
+    # prepara i dataset di training e validation
+    training :DirectoryIterator = prepare_images('./ilsvrc2012Training')
+    validation :DirectoryIterator = prepare_images('./ilsvrc2012Validation')
+
+    # prende la dimensione dei dataset di training e validation
+    training_size   = training.samples        # .samples prende il numero di immagini contenute nell'iteratore
+    validation_size = validation.samples
 
     # creo il modello
     deepundeeper :Model = create_model()
     print(deepundeeper.summary())
 
-    # alleno il modello
-    # TODO: provare ad allenare il modello con le istruzioni seguenti e commentare riga 116
-    # TODO: provare ad utilizzare len(imgs) e vedere cosa succede
-    '''
+    # alleno il modello    
     model_filepath = './deepundeeper_checkpoint.h5' # path dove andranno salvati i checkpoint
     
     # callbacks
@@ -105,15 +106,15 @@ def main(args):
     save_best = ModelCheckpoint(model_filepath, monitor='val_loss', save_best_only=True, mode='min', verbose = 1) # Saves the best version of the model to disk
 
     deepundeeper_history = deepundeeper.fit(
-        imgs, 
-        steps_per_epoch=10000 // BATCH,     # per renderlo indipendente dal numero di immagini provare con len(imgs)
+        training, 
+        steps_per_epoch=training_size // BATCH,     # training
         epochs=EPOCHS, 
         validation_data=validation,
-        validation_steps=1000 // BATCH,
+        validation_steps=validation_size // BATCH,
         callbacks=[es, save_best]
         )
-    '''
-    deepundeeper_history = deepundeeper.fit(imgs, epochs=EPOCHS)
+    
+    # deepundeeper_history = deepundeeper.fit(training, epochs=EPOCHS)
     
     # salvo il modello
     deepundeeper.save('deep_undeeper224.model')
